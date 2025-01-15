@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
         } else if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
             // スマレ線の最短経路
-            route = calculateRouteWithLeftSmare(startsSmare, smareIndexStart, smareIndexEnd);
+            route = calculateRouteWithLeftSmare(stationsSmare, smareIndexStart, smareIndexEnd);
         } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
             route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
         } else {
