@@ -1,147 +1,113 @@
-// 駅リスト（スマレ線、スツァーフケ線）
-const smareLineStations = [
-    "スツューフテ中央", "市役所前", "スツライルペ1丁目", "スツライルペ2丁目", "スツライルペ3丁目", 
-    "シュンギアファベルペ1丁目", "シュンギアファベルペ2丁目", "シュンギアファベルペ3丁目", "サーキット東", 
-    "サーキット西", "ダウケルペ南", "国会議事堂前", "共和広場", "ファウペルペ北", "観光地区1丁目", 
-    "観光地区2丁目", "観光地区3丁目", "住宅街1丁目", "住宅街2丁目", "住宅街3丁目", "学園町1丁目(KSS)", 
-    "学園町2丁目", "学園町3丁目", "ガメルペ"
-];
+document.addEventListener('DOMContentLoaded', function() {
+    const stationsSmare = [
+        "スツューフテ中央", "市役所前", "スツライルペ1丁目", "スツライルペ2丁目",
+        "スツライルペ3丁目", "シュンギアファベルペ1丁目", "シュンギアファベルペ2丁目",
+        "シュンギアファベルペ3丁目", "サーキット東", "サーキット西", "ダウケルペ南",
+        "国会議事堂前", "共和広場", "ファウペルペ北", "観光地区1丁目", "観光地区2丁目",
+        "観光地区3丁目", "住宅街1丁目", "住宅街2丁目", "住宅街3丁目", "学園町1丁目(KSS)",
+        "学園町2丁目", "学園町3丁目", "ガメルペ", "スツューフテ中央"
+    ];
 
-const tsarfkeLineStations = [
-    "共和広場", "ファウペルペ南", "ダウケルペ北", "ツァラアクラテ3丁目", "ツァラアクラテ2丁目", 
-    "ツァラアクラテ1丁目", "ツァラアクラテ中央", "問屋街3丁目", "問屋街2丁目", "問屋街1丁目", 
-    "スツューフテ中央", "副都心1丁目", "副都心2丁目", "副都心3丁目", "グラペルペ南", "グラペルペ北", "スツァーフケ"
-];
+    const stationsStsarfke = [
+        "共和広場", "ファウペルペ南", "ダウケルペ北", "ツァラアクラテ3丁目", "ツァラアクラテ2丁目",
+        "ツァラアクラテ1丁目", "ツァラアクラテ中央", "問屋街3丁目", "問屋街2丁目", "問屋街1丁目",
+        "スツューフテ中央", "副都心1丁目", "副都心2丁目", "副都心3丁目", "グラペルペ南",
+        "グラペルペ北", "スツァーフケ"
+    ];
 
-// 駅間所要時間（全駅間1.13分）
-const travelTime = 1.13; // 分
+    const routeColors = {
+        "スマレ線": "red",
+        "スツァーフケ線": "green"
+    };
 
-// 最短経路の選択と乗り換え処理
-function calculateRoute(start, end) {
-    // スツァーフケ線を優先するため、スツューフテ中央 ⇄ 共和広場のルートを優先
-    if ((start === "共和広場" && end === "スツューフテ中央") || (start === "スツューフテ中央" && end === "共和広場")) {
-        return calculateTsarfkeLineRoute(start, end);
-    }
+    const timePerStation = 1.13; // minutes
+    const transferTime = 3; // minutes
+    const distancePerStation = 1.0; // assumed to be 1 km per station
 
-    // 環状線（スマレ線）で最短経路を選ぶ
-    let route = findShortestRouteOnSmareLine(start, end);
-    
-    // 結果を出力
-    displayRoute(route);
-}
-
-// スツァーフケ線を使用した経路計算
-function calculateTsarfkeLineRoute(start, end) {
-    let route = [];
-    let time = 0;
-    let distance = 0;
-
-    let startIndex = tsarfkeLineStations.indexOf(start);
-    let endIndex = tsarfkeLineStations.indexOf(end);
-
-    // 共和広場⇄スツューフテ中央
-    if (startIndex !== -1 && endIndex !== -1) {
-        let path = tsarfkeLineStations.slice(startIndex, endIndex + 1);
-        path.forEach((station, index) => {
-            if (index < path.length - 1) {
-                time += travelTime;
-                distance += 1;
-            }
+    // Populate station select options
+    const stationSelects = document.querySelectorAll('.station-select');
+    stationSelects.forEach(select => {
+        stationsSmare.concat(stationsStsarfke).forEach(station => {
+            let option = document.createElement('option');
+            option.value = station;
+            option.textContent = station;
+            select.appendChild(option);
         });
-        route = path;
-    }
+    });
 
-    // 乗り換えの表記
-    route.push("【乗り換え】");
+    // Calculate route
+    document.getElementById('calculate-btn').addEventListener('click', function() {
+        const startStation = document.getElementById('start-station').value;
+        const endStation = document.getElementById('end-station').value;
 
-    // 出力
-    return { route: route, time: time, distance: distance };
-}
+        if (startStation === endStation) {
+            alert('乗車駅と降車駅が同じです。');
+            return;
+        }
 
-// 環状線（スマレ線）の最短経路計算
-function findShortestRouteOnSmareLine(start, end) {
-    let route = [];
-    let time = 0;
-    let distance = 0;
+        const result = calculateShortestRoute(startStation, endStation);
+        displayRoute(result);
+    });
 
-    // 左回り、右回り両方の経路を比較
-    const clockwiseRoute = findRouteOnSmareLine(start, end, true);
-    const counterClockwiseRoute = findRouteOnSmareLine(start, end, false);
+    function calculateShortestRoute(start, end) {
+        const smareIndexStart = stationsSmare.indexOf(start);
+        const smareIndexEnd = stationsSmare.indexOf(end);
+        const stsarfkeIndexStart = stationsStsarfke.indexOf(start);
+        const stsarfkeIndexEnd = stationsStsarfke.indexOf(end);
 
-    // 最短経路を選択
-    if (clockwiseRoute.time < counterClockwiseRoute.time) {
-        route = clockwiseRoute.route;
-        time = clockwiseRoute.time;
-        distance = clockwiseRoute.distance;
-    } else {
-        route = counterClockwiseRoute.route;
-        time = counterClockwiseRoute.time;
-        distance = counterClockwiseRoute.distance;
-    }
+        let route = [];
+        let time = 0;
+        let distance = 0;
+        let transfer = false;
 
-    return { route: route, time: time, distance: distance };
-}
+        if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
+            route = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
+        } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
+            route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+        } else {
+            // Handle transfer scenario: prioritize the Smare and Stsarfke line connection through the central station
+            const smareToStsarfke = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf("スツューフテ中央"));
+            const stsarfkeToSmare = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stationsStsarfke.indexOf("スツューフテ中央"));
 
-// スマレ線でのルート検索（左回り・右回りの選択）
-function findRouteOnSmareLine(start, end, clockwise) {
-    let startIndex = smareLineStations.indexOf(start);
-    let endIndex = smareLineStations.indexOf(end);
-
-    let route = [];
-    let time = 0;
-    let distance = 0;
-
-    if (startIndex !== -1 && endIndex !== -1) {
-        // 左回り
-        if (clockwise) {
-            if (startIndex <= endIndex) {
-                route = smareLineStations.slice(startIndex, endIndex + 1);
-                time = (endIndex - startIndex) * travelTime;
-                distance = endIndex - startIndex;
-            } else {
-                route = smareLineStations.slice(startIndex).concat(smareLineStations.slice(0, endIndex + 1));
-                time = (smareLineStations.length - startIndex + endIndex) * travelTime;
-                distance = smareLineStations.length - startIndex + endIndex;
+            if (smareToStsarfke.length + stsarfkeToSmare.length < 30) {
+                route = smareToStsarfke.concat("乗り換え").concat(stsarfkeToSmare);
+                time += transferTime;
+                transfer = true;
             }
         }
-        // 右回り
-        else {
-            if (startIndex >= endIndex) {
-                route = smareLineStations.slice(endIndex, startIndex + 1).reverse();
-                time = (startIndex - endIndex) * travelTime;
-                distance = startIndex - endIndex;
-            } else {
-                route = smareLineStations.slice(endIndex).concat(smareLineStations.slice(0, startIndex + 1)).reverse();
-                time = (smareLineStations.length - endIndex + startIndex) * travelTime;
-                distance = smareLineStations.length - endIndex + startIndex;
-            }
+
+        // Apply time and distance calculations
+        time += route.length * timePerStation;
+        distance += route.length * distancePerStation;
+
+        return { route, time, distance, transfer };
+    }
+
+    function calculateDirectRoute(line, startIndex, endIndex) {
+        if (startIndex < endIndex) {
+            return line.slice(startIndex, endIndex + 1);
+        } else {
+            return line.slice(startIndex).concat(line.slice(0, endIndex + 1));
         }
     }
 
-    return { route: route, time: time, distance: distance };
-}
+    function displayRoute(result) {
+        let routeText = result.route.join(' → ');
+        
+        if (result.transfer) {
+            // Split route to show transfer station
+            const splitIndex = result.route.indexOf("乗り換え");
+            const firstPart = result.route.slice(0, splitIndex);
+            const secondPart = result.route.slice(splitIndex + 1);
+            routeText = `${firstPart.join(' → ')} → 【乗り換え】 → ${secondPart.join(' → ')}`;
+        }
 
-// 結果の表示
-function displayRoute(routeData) {
-    const outputDiv = document.getElementById('route-output');
-    const { route, time, distance } = routeData;
-
-    let outputHTML = `<h3>経路</h3><p>出発駅: ${route[0]} → 降車駅: ${route[route.length - 1]}</p>`;
-    outputHTML += `<p>所要時間: ${time.toFixed(2)} 分</p>`;
-    outputHTML += `<p>距離: ${distance} 駅</p>`;
-    outputHTML += `<p>途中駅: ${route.join(' → ')}</p>`;
-
-    outputDiv.innerHTML = outputHTML;
-}
-
-// ボタンのクリックイベント処理
-document.getElementById('calculate-btn').addEventListener('click', function() {
-    const startStation = document.getElementById('start-station').value;
-    const endStation = document.getElementById('end-station').value;
-
-    if (startStation && endStation) {
-        calculateRoute(startStation, endStation);
-    } else {
-        alert("乗車駅と降車駅を選択してください");
+        document.getElementById('route-output').innerHTML = `
+            <h3>ルート情報</h3>
+            <p>途中駅: ${routeText}</p>
+            <p>所要時間: ${result.time.toFixed(2)} 分</p>
+            <p>距離: ${result.distance.toFixed(2)} km</p>
+        `;
     }
 });
+
