@@ -60,71 +60,34 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
-        // 乗り換え駅
-        const transferStations = [
-            { smare: "スツューフテ中央(M)", stsarfke: "スツューフテ中央(C’)" },
-            { smare: "共和広場(M)", stsarfke: "共和広場(C’)" }
-        ];
-
-        // 乗車駅と降車駅が異なる路線にまたがる場合
-        if ((smareIndexStart !== -1 && stsarfkeIndexEnd !== -1) || (stsarfkeIndexStart !== -1 && smareIndexEnd !== -1)) {
-            let transferStation = null;
-
-            // 最寄の乗り換え駅を決定
-            for (let transferPair of transferStations) {
-                if ((smareIndexStart !== -1 && stationsSmare.indexOf(transferPair.smare) !== -1) &&
-                    (stsarfkeIndexEnd !== -1 && stationsStsarfke.indexOf(transferPair.stsarfke) !== -1)) {
-                    transferStation = transferPair;
-                    break;
-                } else if ((stsarfkeIndexStart !== -1 && stationsStsarfke.indexOf(transferPair.stsarfke) !== -1) &&
-                    (smareIndexEnd !== -1 && stationsSmare.indexOf(transferPair.smare) !== -1)) {
-                    transferStation = transferPair;
-                    break;
-                }
+        // ① スマレ線の最短経路修正：上り(順行)と下り(逆行)の比較
+        if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
+            const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
+            const counterClockwiseRoute = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - smareIndexEnd);
+            
+            // 下りが最短経路の場合
+            if (counterClockwiseRoute.length <= clockwiseRoute.length) {
+                route = counterClockwiseRoute;
+            } else {
+                route = clockwiseRoute;
             }
-
-            if (transferStation) {
-                // 乗り換え駅まで最短経路を選択
-                const smareToTransferClockwise = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf(transferStation.smare));
-                const smareToTransferCounterClockwise = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - stationsSmare.indexOf(transferStation.smare));
-
-                const stsarfkeToTransferClockwise = calculateDirectRoute(stationsStsarfke, stationsStsarfke.indexOf(transferStation.stsarfke), stsarfkeIndexEnd);
-                const stsarfkeToTransferCounterClockwise = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stationsStsarfke.indexOf(transferStation.stsarfke), stationsStsarfke.length - 1 - stsarfkeIndexEnd);
-
-                // 上り・下りを比較して最短経路を選択
-                let smareToTransfer = smareToTransferClockwise.length <= smareToTransferCounterClockwise.length ? smareToTransferClockwise : smareToTransferCounterClockwise;
-                let stsarfkeToTransfer = stsarfkeToTransferClockwise.length <= stsarfkeToTransferCounterClockwise.length ? stsarfkeToTransferClockwise : stsarfkeToTransferCounterClockwise;
-
-                route = smareToTransfer.concat(["乗り換え"]).concat(stsarfkeToTransfer);
-                time += transferTime + (route.length * timePerStation);
-                distance += route.length * distancePerStation;
-                transfer = true;
-            }
-        } else {
-            // スマレ線またはスツァーフケ線のみの計算
-            if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
-                const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
-                const counterClockwiseRoute = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - smareIndexEnd);
-                
-                // 下りが最短経路の場合
-                if (counterClockwiseRoute.length <= clockwiseRoute.length) {
-                    route = counterClockwiseRoute;
-                } else {
-                    route = clockwiseRoute;
-                }
-            } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
-                if (stsarfkeIndexStart < stsarfkeIndexEnd) {
-                    route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
-                } else {
-                    route = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stsarfkeIndexStart, stationsStsarfke.length - 1 - stsarfkeIndexEnd);
-                }
+        } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
+            // スツァーフケ線は循環しないので、単純に順方向もしくは逆方向で最短経路を計算
+            if (stsarfkeIndexStart < stsarfkeIndexEnd) {
+                route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+            } else {
+                route = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stsarfkeIndexStart, stationsStsarfke.length - 1 - stsarfkeIndexEnd);
             }
         }
+
+        time += route.length * timePerStation;
+        distance += route.length * distancePerStation;
 
         return { route, time, distance, transfer };
     }
 
     function calculateDirectRoute(line, startIndex, endIndex) {
+        // 逆順の場合に順番を正しく表示するために、逆順処理を追加
         if (startIndex < endIndex) {
             return line.slice(startIndex, endIndex + 1);
         } else {
@@ -141,3 +104,4 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 });
+
