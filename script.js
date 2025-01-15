@@ -84,10 +84,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (transferStation) {
-                const smareToTransfer = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf(transferStation.smare));
-                const stsarfkeToTransfer = calculateDirectRoute(stationsStsarfke, stsarfkeIndexEnd, stationsStsarfke.indexOf(transferStation.stsarfke));
-                
-                route = smareToTransfer.concat("乗り換え").concat(stsarfkeToTransfer);
+                // 乗り換え駅まで最短経路を選択
+                const smareToTransferClockwise = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf(transferStation.smare));
+                const smareToTransferCounterClockwise = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - stationsSmare.indexOf(transferStation.smare));
+
+                const stsarfkeToTransferClockwise = calculateDirectRoute(stationsStsarfke, stationsStsarfke.indexOf(transferStation.stsarfke), stsarfkeIndexEnd);
+                const stsarfkeToTransferCounterClockwise = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stationsStsarfke.indexOf(transferStation.stsarfke), stationsStsarfke.length - 1 - stsarfkeIndexEnd);
+
+                // 上り・下りを比較して最短経路を選択
+                let smareToTransfer = smareToTransferClockwise.length <= smareToTransferCounterClockwise.length ? smareToTransferClockwise : smareToTransferCounterClockwise;
+                let stsarfkeToTransfer = stsarfkeToTransferClockwise.length <= stsarfkeToTransferCounterClockwise.length ? stsarfkeToTransferClockwise : stsarfkeToTransferCounterClockwise;
+
+                route = smareToTransfer.concat(["乗り換え"]).concat(stsarfkeToTransfer);
                 time += transferTime + (route.length * timePerStation);
                 distance += route.length * distancePerStation;
                 transfer = true;
@@ -133,3 +141,4 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 });
+
