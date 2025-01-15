@@ -60,17 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
-        // 禁止ルート: スツァーフケ線内の逆向き経路は禁止
-        if ((start === "スツァーフケ" && end === "共和広場(C’)") || (start === "共和広場(C’)" && end === "スツァーフケ")) {
-            alert('スツァーフケ線はこの経路では運行していません。');
-            return;
-        }
-
         // ② 乗車駅が共和広場、降車駅がスツューフテ中央の場合、またはその逆はスツァーフケ線を優先
         if ((start === "共和広場(M)" && end === "スツューフテ中央(M)") || (start === "スツューフテ中央(M)" && end === "共和広場(M)")) {
             route = calculateDirectRoute(stationsStsarfke, stationsStsarfke.indexOf(start), stationsStsarfke.indexOf(end));
         }
-        // ① スマレ線の最短経路
+        // ① 環状線の最短経路修正：左回りか右回りかを判断（スマレ線のみ）
         else if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
             const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
             const counterClockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexEnd, smareIndexStart);
@@ -80,10 +74,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 route = counterClockwiseRoute;
             }
-        } 
-        // ② スツァーフケ線の経路（逆順可能）
-        else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
-            route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+        } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
+            // スツァーフケ線は循環しないので、単純に順方向もしくは逆方向で最短経路を計算
+            if (stsarfkeIndexStart < stsarfkeIndexEnd) {
+                route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+            } else {
+                route = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stsarfkeIndexStart, stationsStsarfke.length - 1 - stsarfkeIndexEnd);
+            }
         } else {
             // 乗り換えが必要な場合（スツューフテ中央(M)とスツューフテ中央(C’)）
             const smareToStsarfke = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf("スツューフテ中央(M)"));
