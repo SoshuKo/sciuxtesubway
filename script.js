@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const timePerStation = 1.13; // minutes
-    const transferTime = 0; // minutes
     const distancePerStation = 1.0; // assumed to be 1 km per station
 
     // Populate station select options
@@ -35,18 +34,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Handle via station selection to enable/disable end station
+    const viaStationSelect = document.getElementById('via-station');
+    const endStationSelect = document.getElementById('end-station');
+    viaStationSelect.addEventListener('change', function() {
+        const specialStations = ["スツューフテ中央(M)", "スツューフテ中央(C’)", "共和広場(M)", "共和広場(C’)"];
+        if (specialStations.includes(viaStationSelect.value)) {
+            endStationSelect.disabled = false;
+        } else {
+            endStationSelect.disabled = true;
+            endStationSelect.value = "";
+        }
+    });
+
     // Calculate route
     document.getElementById('calculate-btn').addEventListener('click', function() {
         const startStation = document.getElementById('start-station').value;
+        const viaStation = document.getElementById('via-station').value;
         const endStation = document.getElementById('end-station').value;
 
-        if (startStation === endStation) {
-            alert('乗車駅と降車駅が同じです。');
+        if (startStation === viaStation || (viaStation && viaStation === endStation)) {
+            alert('選択した駅が同じです。');
             return;
         }
 
-        const result = calculateShortestRoute(startStation, endStation);
-        displayRoute(result);
+        const route1 = calculateShortestRoute(startStation, viaStation);
+        displayRoute(route1, 'route-output-1', "ルート情報1");
+
+        if (viaStation) {
+            let nextStartStation = getCounterpartStation(viaStation);
+            const route2 = calculateShortestRoute(nextStartStation, endStation);
+            displayRoute(route2, 'route-output-2', "ルート情報2");
+            displayTotal(route1, route2);
+        }
     });
 
     function calculateShortestRoute(start, end) {
@@ -58,50 +78,55 @@ document.addEventListener('DOMContentLoaded', function() {
         let route = [];
         let time = 0;
         let distance = 0;
-        let transfer = false;
 
-        // ① スマレ線の最短経路修正：上り(順行)と下り(逆行)の比較
         if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
             const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
             const counterClockwiseRoute = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - smareIndexEnd);
-            
-            // 下りが最短経路の場合
-            if (counterClockwiseRoute.length <= clockwiseRoute.length) {
-                route = counterClockwiseRoute;
-            } else {
-                route = clockwiseRoute;
-            }
+            route = (counterClockwiseRoute.length <= clockwiseRoute.length) ? counterClockwiseRoute : clockwiseRoute;
         } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
-            // スツァーフケ線は循環しないので、単純に順方向もしくは逆方向で最短経路を計算
-            if (stsarfkeIndexStart < stsarfkeIndexEnd) {
-                route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
-            } else {
-                route = calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stsarfkeIndexStart, stationsStsarfke.length - 1 - stsarfkeIndexEnd);
-            }
+            route = (stsarfkeIndexStart < stsarfkeIndexEnd) ?
+                calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd) :
+                calculateDirectRoute(stationsStsarfke.reverse(), stationsStsarfke.length - 1 - stsarfkeIndexStart, stationsStsarfke.length - 1 - stsarfkeIndexEnd);
         }
 
-        time += route.length * timePerStation;
-        distance += route.length * distancePerStation;
+        time += (route.length - 1) * timePerStation;
+        distance += (route.length - 1) * distancePerStation;
 
-        return { route, time, distance, transfer };
+        return { route, time, distance };
     }
 
     function calculateDirectRoute(line, startIndex, endIndex) {
-        // 逆順の場合に順番を正しく表示するために、逆順処理を追加
-        if (startIndex < endIndex) {
-            return line.slice(startIndex, endIndex + 1);
-        } else {
-            return line.slice(startIndex).concat(line.slice(0, endIndex + 1));
-        }
+        return (startIndex < endIndex) ?
+            line.slice(startIndex, endIndex + 1) :
+            line.slice(startIndex).concat(line.slice(0, endIndex + 1));
     }
 
-    function displayRoute(result) {
-        document.getElementById('route-output').innerHTML = `
-            <h3>ルート情報</h3>
+    function getCounterpartStation(station) {
+        const counterparts = {
+            "スツューフテ中央(M)": "スツューフテ中央(C’)",
+            "スツューフテ中央(C’)": "スツューフテ中央(M)",
+            "共和広場(M)": "共和広場(C’)",
+            "共和広場(C’)": "共和広場(M)"
+        };
+        return counterparts[station];
+    }
+
+    function displayRoute(result, outputId, title) {
+        document.getElementById(outputId).innerHTML = `
+            <h3>${title}</h3>
             <p>途中駅: ${result.route.join(' → ')}</p>
             <p>所要時間: ${result.time.toFixed(2)} 分</p>
             <p>距離: ${result.distance.toFixed(2)} km</p>
         `;
     }
-});
 
+    function displayTotal(route1, route2) {
+        const totalTime = route1.time + route2.time;
+        const totalDistance = route1.distance + route2.distance;
+        document.getElementById('total-output').innerHTML = `
+            <h3>合計</h3>
+            <p>総所要時間: ${totalTime.toFixed(2)} 分</p>
+            <p>総距離: ${totalDistance.toFixed(2)} km</p>
+        `;
+    }
+});
