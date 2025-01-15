@@ -60,11 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
+        // 禁止ルート: スツァーフケ線内の逆向き経路は禁止
+        if ((start === "スツァーフケ" && end === "共和広場(C’)") || (start === "共和広場(C’)" && end === "スツァーフケ")) {
+            alert('スツァーフケ線はこの経路では運行していません。');
+            return;
+        }
+
         // ② 乗車駅が共和広場、降車駅がスツューフテ中央の場合、またはその逆はスツァーフケ線を優先
         if ((start === "共和広場(M)" && end === "スツューフテ中央(M)") || (start === "スツューフテ中央(M)" && end === "共和広場(M)")) {
             route = calculateDirectRoute(stationsStsarfke, stationsStsarfke.indexOf(start), stationsStsarfke.indexOf(end));
         }
-        // ① 環状線の最短経路修正：左回りか右回りかを判断
+        // ① スマレ線の最短経路
         else if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
             const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
             const counterClockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexEnd, smareIndexStart);
@@ -74,7 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 route = counterClockwiseRoute;
             }
-        } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
+        } 
+        // ② スツァーフケ線の経路（逆順可能）
+        else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
             route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
         } else {
             // 乗り換えが必要な場合（スツューフテ中央(M)とスツューフテ中央(C’)）
