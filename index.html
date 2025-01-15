@@ -19,15 +19,22 @@
                     <option value="">選択してください</option>
                 </select>
 
+                <label for="via-station">降車駅(経由駅):</label>
+                <select id="via-station" class="station-select">
+                    <option value="">選択してください</option>
+                </select>
+
                 <label for="end-station">降車駅:</label>
-                <select id="end-station" class="station-select">
+                <select id="end-station" class="station-select" disabled>
                     <option value="">選択してください</option>
                 </select>
 
                 <button id="calculate-btn">計算</button>
             </div>
 
-            <div id="route-output" class="route-output"></div>
+            <div id="route-output-1" class="route-output"></div>
+            <div id="route-output-2" class="route-output"></div>
+            <div id="total-output" class="route-output"></div>
         </main>
     </div>
 
