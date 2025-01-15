@@ -15,15 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
         "グラペルペ北", "スツァーフケ"
     ];
 
-    const routeColors = {
-        "スマレ線": "red",
-        "スツァーフケ線": "green"
-    };
-
     const timePerStation = 1.13; // minutes
     const distancePerStation = 1.0; // assumed to be 1 km per station
 
-    // Populate station select options
     const stationSelects = document.querySelectorAll('.station-select');
     stationSelects.forEach(select => {
         stationsSmare.concat(stationsStsarfke).forEach(station => {
@@ -34,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handle via station selection to enable/disable end station
     const viaStationSelect = document.getElementById('via-station');
     const endStationSelect = document.getElementById('end-station');
     viaStationSelect.addEventListener('change', function() {
@@ -47,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Calculate route
     document.getElementById('calculate-btn').addEventListener('click', function() {
         const startStation = document.getElementById('start-station').value;
         const viaStation = document.getElementById('via-station').value;
@@ -58,16 +50,36 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (!isSameLine(startStation, viaStation)) {
+            alert('同じ路線の駅を選択して下さい。');
+            return;
+        }
+
         const route1 = calculateShortestRoute(startStation, viaStation);
         displayRoute(route1, 'route-output-1', "ルート情報1");
 
         if (viaStation) {
             let nextStartStation = getCounterpartStation(viaStation);
-            const route2 = calculateShortestRoute(nextStartStation, endStation);
-            displayRoute(route2, 'route-output-2', "ルート情報2");
-            displayTotal(route1, route2);
+            if (endStation) {
+                if (!isSameLine(nextStartStation, endStation)) {
+                    alert('同じ路線の駅を選択して下さい。');
+                    return;
+                }
+                const route2 = calculateShortestRoute(nextStartStation, endStation);
+                displayRoute(route2, 'route-output-2', "ルート情報2");
+                displayTotal(route1, route2);
+            } else {
+                displayTotal(route1, null);
+            }
+        } else {
+            displayTotal(route1, null);
         }
     });
+
+    function isSameLine(station1, station2) {
+        return (stationsSmare.includes(station1) && stationsSmare.includes(station2)) ||
+               (stationsStsarfke.includes(station1) && stationsStsarfke.includes(station2));
+    }
 
     function calculateShortestRoute(start, end) {
         const smareIndexStart = stationsSmare.indexOf(start);
@@ -121,8 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayTotal(route1, route2) {
-        const totalTime = route1.time + route2.time;
-        const totalDistance = route1.distance + route2.distance;
+        const totalTime = route1.time + (route2 ? route2.time : 0);
+        const totalDistance = route1.distance + (route2 ? route2.distance : 0);
         document.getElementById('total-output').innerHTML = `
             <h3>合計</h3>
             <p>総所要時間: ${totalTime.toFixed(2)} 分</p>
