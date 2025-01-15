@@ -60,54 +60,54 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
-      if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
-        route = calculateShortestCircularRoute(stationsSmare, smareIndexStart, smareIndexEnd);
-      } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
-        route = calculateShortestCircularRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
-      } else {
-        // 共和広場⇄スツューフテ中央間は、原則としてスツァーフケ線を利用
-        if ((start === "共和広場" && end === "スツューフテ中央") || (start === "スツューフテ中央" && end === "共和広場")) {
-          route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+        if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
+            route = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
+        } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
+            route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
         } else {
-          // その他の場合は、最短経路を計算
-          const smareToStsarfke = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf("スツューフテ中央"));
-          const stsarfkeToSmare = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stationsStsarfke.indexOf("スツューフテ中央"));
-          if (smareToStsarfke.length + stsarfkeToSmare.length < 30) {
-            route = smareToStsarfke.concat("乗り換え").concat(stsarfkeToSmare);
-            time += transferTime;
-            transfer = true;
-          }
-        }
-      }
+            // Handle transfer scenario: prioritize the Smare and Stsarfke line connection through the central station
+            const smareToStsarfke = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf("スツューフテ中央"));
+            const stsarfkeToSmare = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stationsStsarfke.indexOf("スツューフテ中央"));
 
+            if (smareToStsarfke.length + stsarfkeToSmare.length < 30) {
+                route = smareToStsarfke.concat("乗り換え").concat(stsarfkeToSmare);
+                time += transferTime;
+                transfer = true;
+            }
+        }
+
+        // Apply time and distance calculations
         time += route.length * timePerStation;
         distance += route.length * distancePerStation;
 
         return { route, time, distance, transfer };
     }
 
-function calculateShortestCircularRoute(line, startIndex, endIndex) {
-  const clockwise = line.slice(startIndex).concat(line.slice(0, endIndex + 1));
-  const counterclockwise = line.slice(endIndex).concat(line.slice(0, startIndex + 1));
-  return clockwise.length < counterclockwise.length ? clockwise : counterclockwise;
-}
-
-function displayRoute(result) {
-  let routeString = "";
-  for (let i = 0; i < result.route.length; i++) {
-    if (result.route[i] === "乗り換え") {
-      routeString += ` → ${result.route[i]} → `;
-    } else {
-      routeString += ` ${result.route[i]} → `;
+    function calculateDirectRoute(line, startIndex, endIndex) {
+        if (startIndex < endIndex) {
+            return line.slice(startIndex, endIndex + 1);
+        } else {
+            return line.slice(startIndex).concat(line.slice(0, endIndex + 1));
+        }
     }
-  }
-  routeString = routeString.slice(0, -3); // 末尾の " → " を削除
 
-  document.getElementById('route-output').innerHTML = `
-    <h3>ルート情報</h3>
-    <p>途中駅: ${routeString}</p>
-    <p>所要時間: ${result.time.toFixed(2)} 分</p>
-    <p>距離: ${result.distance.toFixed(2)} km</p>
-  `;
-}
+    function displayRoute(result) {
+        let routeText = result.route.join(' → ');
+        
+        if (result.transfer) {
+            // Split route to show transfer station
+            const splitIndex = result.route.indexOf("乗り換え");
+            const firstPart = result.route.slice(0, splitIndex);
+            const secondPart = result.route.slice(splitIndex + 1);
+            routeText = `${firstPart.join(' → ')} → 【乗り換え】 → ${secondPart.join(' → ')}`;
+        }
+
+        document.getElementById('route-output').innerHTML = `
+            <h3>ルート情報</h3>
+            <p>途中駅: ${routeText}</p>
+            <p>所要時間: ${result.time.toFixed(2)} 分</p>
+            <p>距離: ${result.distance.toFixed(2)} km</p>
+        `;
+    }
 });
+
