@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スツューフテ地下鉄・乗降案内</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>スツューフテ地下鉄・乗降案内</h1>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <label for="start-station">乗車駅:</label>
+                <select id="start-station" class="station-select">
+                    <option value="">選択してください</option>
+                </select>
+
+                <label for="end-station">降車駅:</label>
+                <select id="end-station" class="station-select">
+                    <option value="">選択してください</option>
+                </select>
+
+                <button id="calculate-btn">計算</button>
+            </div>
+
+            <div id="route-output" class="route-output"></div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
