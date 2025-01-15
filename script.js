@@ -60,12 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
-        // ② 乗車駅が共和広場、降車駅がスツューフテ中央の場合、またはその逆はスツァーフケ線を優先
-        if ((start === "共和広場(M)" && end === "スツューフテ中央(M)") || (start === "スツューフテ中央(M)" && end === "共和広場(M)")) {
-            route = calculateDirectRoute(stationsStsarfke, stationsStsarfke.indexOf(start), stationsStsarfke.indexOf(end));
-        }
         // ① スマレ線の最短経路修正：上り(順行)と下り(逆行)の比較
-        else if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
+        if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
             const clockwiseRoute = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
             const counterClockwiseRoute = calculateDirectRoute(stationsSmare.reverse(), stationsSmare.length - 1 - smareIndexStart, stationsSmare.length - 1 - smareIndexEnd);
             
