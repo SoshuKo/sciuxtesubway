@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', function() {
         "グラペルペ北", "スツァーフケ"
     ];
 
+    // 左回りのスマレ線定義
+    const smareLeftRoute = [
+        "スツューフテ中央", "ガメルペ", "学園町3丁目", "学園町2丁目", "学園町1丁目(KSS)",
+        "住宅街3丁目", "住宅街2丁目", "住宅街1丁目", "観光地区3丁目", "観光地区2丁目",
+        "観光地区1丁目", "ファウペルペ北", "共和広場", "国会議事堂前", "ダウケルペ南",
+        "サーキット西", "サーキット東", "シュンギアファベルペ3丁目", "シュンギアファベルペ2丁目",
+        "シュンギアファベルペ1丁目", "スツライルペ3丁目", "スツライルペ2丁目", "スツライルペ1丁目",
+        "市役所前", "スツューフテ中央"
+    ];
+
     const routeColors = {
         "スマレ線": "red",
         "スツァーフケ線": "green"
@@ -60,15 +70,17 @@ document.addEventListener('DOMContentLoaded', function() {
         let distance = 0;
         let transfer = false;
 
-        if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
-            route = calculateDirectRoute(stationsSmare, smareIndexStart, smareIndexEnd);
+        // スツァーフケ線を優先する条件
+        if ((start === "共和広場" && end === "スツューフテ中央") || (start === "スツューフテ中央" && end === "共和広場")) {
+            route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
+        } else if (smareIndexStart !== -1 && smareIndexEnd !== -1) {
+            // スマレ線の最短経路
+            route = calculateRouteWithLeftSmare(startsSmare, smareIndexStart, smareIndexEnd);
         } else if (stsarfkeIndexStart !== -1 && stsarfkeIndexEnd !== -1) {
             route = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stsarfkeIndexEnd);
         } else {
-            // Handle transfer scenario: prioritize the Smare and Stsarfke line connection through the central station
             const smareToStsarfke = calculateDirectRoute(stationsSmare, smareIndexStart, stationsSmare.indexOf("スツューフテ中央"));
             const stsarfkeToSmare = calculateDirectRoute(stationsStsarfke, stsarfkeIndexStart, stationsStsarfke.indexOf("スツューフテ中央"));
-
             if (smareToStsarfke.length + stsarfkeToSmare.length < 30) {
                 route = smareToStsarfke.concat("乗り換え").concat(stsarfkeToSmare);
                 time += transferTime;
@@ -76,11 +88,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Apply time and distance calculations
         time += route.length * timePerStation;
         distance += route.length * distancePerStation;
 
         return { route, time, distance, transfer };
+    }
+
+    function calculateRouteWithLeftSmare(line, startIndex, endIndex) {
+        const route = [];
+        if (startIndex < endIndex) {
+            return smareLeftRoute.slice(startIndex, endIndex + 1);
+        } else {
+            return smareLeftRoute.slice(startIndex).concat(smareLeftRoute.slice(0, endIndex + 1));
+        }
     }
 
     function calculateDirectRoute(line, startIndex, endIndex) {
@@ -92,22 +112,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayRoute(result) {
-        let routeText = result.route.join(' → ');
-        
-        if (result.transfer) {
-            // Split route to show transfer station
-            const splitIndex = result.route.indexOf("乗り換え");
-            const firstPart = result.route.slice(0, splitIndex);
-            const secondPart = result.route.slice(splitIndex + 1);
-            routeText = `${firstPart.join(' → ')} → 【乗り換え】 → ${secondPart.join(' → ')}`;
-        }
-
         document.getElementById('route-output').innerHTML = `
             <h3>ルート情報</h3>
-            <p>途中駅: ${routeText}</p>
+            <p>途中駅: ${result.route.join(' → ')}</p>
             <p>所要時間: ${result.time.toFixed(2)} 分</p>
             <p>距離: ${result.distance.toFixed(2)} km</p>
         `;
     }
 });
-
