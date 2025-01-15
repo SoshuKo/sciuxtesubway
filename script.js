@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function calculateDirectRoute(line, startIndex, endIndex) {
+        // 逆順の場合に順番を正しく表示するために、逆順処理を追加
         if (startIndex < endIndex) {
             return line.slice(startIndex, endIndex + 1);
         } else {
